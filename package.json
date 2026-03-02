@@ -1,0 +1,35 @@
+{
+  "name": "com.snivelercode.audio-dispatcher",
+  "version": "1.0.0",
+  "displayName": "Audio Dispatcher for DOTS",
+  "description": "A high-performance, thread-safe audio bridging system for Unity ECS. Features Zero-GC object pooling, 3D spatial audio, AudioMixer support, and Burst-compatible event queuing. Designed for high-frequency sound triggering without main thread stalls.",
+  "unity": "2022.3",
+  "author": {
+    "name": "SnivelerCode",
+    "url": "https://github.com/igor-karpushin/com.snivelercode.audio-dispatcher"
+  },
+  "dependencies": {
+	"com.unity.entities.graphics": "1.4.18"
+  },
+  "samples": [
+    {
+      "displayName": "Tank Battle Demo",
+      "description": "A complete ECS example demonstrating 3D spatial audio, projectile sounds, and mixer integration in a chaotic tank battle simulation.",
+      "path": "Samples~/DemoScene"
+    }
+  ],
+  "keywords": [
+    "dots",
+    "ecs",
+    "entity",
+    "audio",
+    "sound",
+    "spatial",
+    "burst",
+    "job-system",
+    "performance",
+    "pooling",
+    "zero-gc"
+  ],
+  "category": "Tools/Audio"
+}

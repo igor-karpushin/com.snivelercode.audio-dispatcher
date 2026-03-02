@@ -1,0 +1,16 @@
+{
+    "name": "com.snivelercode.audio-dispatcher.editor",
+    "rootNamespace": "",
+    "references": [
+        "com.snivelercode.audio-dispatcher.runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
