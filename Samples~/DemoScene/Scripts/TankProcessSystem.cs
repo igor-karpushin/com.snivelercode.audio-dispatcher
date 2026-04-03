@@ -34,13 +34,13 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
             EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
             var settings = SystemAPI.GetSingleton<GameSettingsData>();
-            var audioRef = SystemAPI.GetSingletonRW<NativeAudioSystem.Singleton>();
-            state.Dependency = new CubeMovementJob
+            var audioRef = SystemAPI.GetSingleton<NativeAudioSystem.Singleton>();
+            state.Dependency = new TankMovementJob
             {
                 DeltaTime = SystemAPI.Time.DeltaTime,
                 Settings = settings,
                 CommandBuffer = ecb.AsParallelWriter(),
-                AudioWriter = audioRef.ValueRW.Writer
+                AudioWriter = audioRef.Writer
             }.ScheduleParallel(_query, state.Dependency);
         }
 
@@ -50,55 +50,75 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
         }
 
         [BurstCompile]
-        private partial struct CubeMovementJob : IJobEntity
+        private partial struct TankMovementJob : IJobEntity
         {
             private void Execute([EntityIndexInQuery] int index, in Entity entity, in TankStaticData staticData,
                 ref TankDynamicData data, ref LocalTransform transform)
             {
-                // movement
-                var direction = data.Target - transform.Position;
-                if (math.lengthsq(direction) < 0.1f)
+                switch (data.State)
                 {
-                    data.NextRandomPosition(Settings.Bound);
-                    return;
-                }
-
-                var targetRotation = quaternion.LookRotation(direction, math.up());
-                transform.Rotation = math.slerp(transform.Rotation, targetRotation, 4f * DeltaTime);
-                transform.Position += math.normalize(direction) * DeltaTime * staticData.Speed;
-
-                // projectiles
-                data.ProjectileTimer -= DeltaTime;
-                if (data.ProjectileTimer < 0)
-                {
-                    AudioWriter.Enqueue(new NativeAudioSystem.AudioEvent
+                    case TankDynamicData.InnerState.Spawning:
                     {
-                        SoundId = DemoAudioConfigurationIDs.SHOT,
-                        Position = transform.Position,
-                        Volume = 0.5f,
-                        Pitch = data.Random.NextFloat(0.95f, 1.05f)
-                    });
+                        data.ProjectileTimer -= DeltaTime;
+                        if (data.ProjectileTimer < 0)
+                        {
+                            data.ProjectileTimer = data.Random.NextFloat(2f, 3f);
+                            data.State = TankDynamicData.InnerState.Moving;
+                            DemoAudioConfigurationIDs.MOVING.Loop(entity)
+                                .Volume(0.2f)
+                                .Apply(AudioWriter);
+                        }
 
-                    var projectileOffset = math.mul(transform.Rotation, new float3(0f, 0.544f, 0.139f));
-                    data.ProjectileTimer = staticData.ProjectileCooldown + data.Random.NextFloat(0.1f, 0.3f);
-                    var projectile = CommandBuffer.Instantiate(index, Settings.Projectile);
-                    CommandBuffer.SetComponent(index, projectile,
-                        LocalTransform.FromPositionRotation(
-                            transform.Position + projectileOffset, transform.Rotation));
-                    CommandBuffer.AddComponent(index, projectile, new TankProjectileData
+                        break;
+                    }
+
+                    case TankDynamicData.InnerState.Moving:
                     {
-                        Owner = entity,
-                        Timer = 5f,
-                        Velocity = math.normalize(direction),
-                        Random = new Random(data.Random.state)
-                    });
+                        // movement
+                        var direction = data.Target - transform.Position;
+                        if (math.lengthsq(direction) < 0.1f)
+                        {
+                            data.NextRandomPosition(Settings.Bound);
+                            return;
+                        }
+
+                        var targetRotation = quaternion.LookRotation(direction, math.up());
+                        transform.Rotation = math.slerp(transform.Rotation, targetRotation, 4f * DeltaTime);
+                        transform.Position += math.normalize(direction) * DeltaTime * staticData.Speed;
+
+                        // projectiles
+                        data.ProjectileTimer -= DeltaTime;
+                        if (data.ProjectileTimer < 0)
+                        {
+                            DemoAudioConfigurationIDs.SHOT.Shot(transform.Position)
+                                .Volume(0.5f)
+                                .Pitch(data.Random.NextFloat(0.95f, 1.05f))
+                                .Apply(AudioWriter);
+
+                            var projectileOffset = math.mul(transform.Rotation, new float3(0f, 0.544f, 0.139f));
+                            data.ProjectileTimer = staticData.ProjectileCooldown + data.Random.NextFloat(0.1f, 0.3f);
+                            var projectile = CommandBuffer.Instantiate(index, Settings.Projectile);
+                            CommandBuffer.SetComponent(index, projectile,
+                                LocalTransform.FromPositionRotation(
+                                    transform.Position + projectileOffset, transform.Rotation));
+                            CommandBuffer.AddComponent(index, projectile, new TankProjectileData
+                            {
+                                Owner = entity,
+                                Timer = 5f,
+                                Velocity = math.normalize(direction),
+                                Random = new Random(data.Random.state)
+                            });
+                        }
+
+                        break;
+                    }
                 }
             }
 
             public float DeltaTime;
             [ReadOnly] public GameSettingsData Settings;
             public EntityCommandBuffer.ParallelWriter CommandBuffer;
-            public NativeQueue<NativeAudioSystem.AudioEvent>.ParallelWriter AudioWriter;
+            public NativeQueue<AudioEvent>.ParallelWriter AudioWriter;
         }
     }
 }

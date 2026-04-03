@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 457895f387a039044b1dc7fe8f01bc71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  configuration: {fileID: 11400000, guid: 86c7a26518e13384eab53bed98ed434b, type: 2}
+  database: {fileID: 11400000, guid: 86c7a26518e13384eab53bed98ed434b, type: 2}
 --- !u!1 &1429964583
 GameObject:
   m_ObjectHideFlags: 0
@@ -211,7 +211,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7520461349b5d54094192c2c14cedd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Sample.GameSettingsAuthoring
-  entityCount: 11
+  entityCount: 5
   player: {fileID: 919132149155446097, guid: 546afde78feebfb408d4f8aac9c5d4c4, type: 3}
   projectile: {fileID: 2298700444115240714, guid: 3afea77fd5d104f41aa75918a2ae0b41,
     type: 3}

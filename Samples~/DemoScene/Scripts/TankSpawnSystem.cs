@@ -44,7 +44,7 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
 
                 ecb.AddComponent(entity, new TankDynamicData
                 {
-                    ProjectileTimer = 2f,
+                    ProjectileTimer = settings.Random.NextFloat(0.2f, 1f),
                     Random = new Random(settings.Random.NextUInt(0, int.MaxValue)),
                     Target = settings.RandomPosition()
                 });

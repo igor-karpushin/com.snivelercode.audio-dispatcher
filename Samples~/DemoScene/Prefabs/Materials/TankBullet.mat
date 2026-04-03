@@ -3,7 +3,7 @@
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 32
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -119,11 +119,10 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 0.97735846, g: 0.44073334, b: 0.44073334, a: 1}
-    - _Color: {r: 0.9773584, g: 0.4407333, b: 0.4407333, a: 1}
+    - _Color: {r: 0.97735846, g: 0.44073334, b: 0.44073334, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!114 &2105759056349175970
 MonoBehaviour:
   m_ObjectHideFlags: 11

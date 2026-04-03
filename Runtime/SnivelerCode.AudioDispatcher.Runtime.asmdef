@@ -1,12 +1,13 @@
 {
-    "name": "com.snivelercode.audio-dispatcher.runtime",
-    "rootNamespace": "SnivelerCode.AudioDispatcher",
+    "name": "SnivelerCode.AudioDispatcher.Runtime",
+    "rootNamespace": "SnivelerCode.AudioDispatcher.Runtime",
     "references": [
         "Unity.Mathematics",
         "Unity.Entities",
         "Unity.Collections",
         "Unity.Burst",
-        "Unity.Entities.Hybrid"
+        "Unity.Entities.Hybrid",
+        "Unity.Transforms"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

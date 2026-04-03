@@ -29,6 +29,7 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
             _hashMap = new NativeParallelHashMap<Entity, float2>(256, Allocator.Persistent);
 
             state.RequireForUpdate(_queryProjectiles);
+            state.RequireForUpdate<NativeAudioSystem.Singleton>();
             state.RequireForUpdate<BeginInitializationEntityCommandBufferSystem.Singleton>();
             state.RequireForUpdate<GameSettingsData>();
         }
@@ -40,7 +41,7 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
             EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
             _hashMap.Clear();
-            var audioRef = SystemAPI.GetSingletonRW<NativeAudioSystem.Singleton>();
+            var audioRef = SystemAPI.GetSingleton<NativeAudioSystem.Singleton>();
             var settings = SystemAPI.GetSingleton<GameSettingsData>();
             state.Dependency = new HashJob
             {
@@ -53,7 +54,7 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
                 DeltaTime = SystemAPI.Time.DeltaTime,
                 Settings = settings,
                 CommandBuffer = ecb.AsParallelWriter(),
-                AudioWriter = audioRef.ValueRW.Writer
+                AudioWriter = audioRef.Writer
             }.ScheduleParallel(_queryProjectiles, state.Dependency);
         }
 
@@ -98,13 +99,10 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
                     float distance = math.distance(transform.Position.xz, pair.Value);
                     if (distance < 0.5f)
                     {
-                        AudioWriter.Enqueue(new NativeAudioSystem.AudioEvent
-                        {
-                            SoundId = DemoAudioConfigurationIDs.EXPLOSION,
-                            Position = transform.Position,
-                            Volume = 0.5f,
-                            Pitch = data.Random.NextFloat(0.95f, 1.05f)
-                        });
+                        DemoAudioConfigurationIDs.EXPLOSION.Shot(transform.Position)
+                            .Volume(0.5f)
+                            .Pitch(data.Random.NextFloat(0.95f, 1.05f))
+                            .Apply(AudioWriter);
 
                         CommandBuffer.DestroyEntity(index, entity);
                         CommandBuffer.SetComponentEnabled<GlobalDestroyData>(index, pair.Key, true);
@@ -124,7 +122,7 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
             [ReadOnly] public GameSettingsData Settings;
             public EntityCommandBuffer.ParallelWriter CommandBuffer;
             public NativeParallelHashMap<Entity, float2>.ReadOnly HashMap;
-            public NativeQueue<NativeAudioSystem.AudioEvent>.ParallelWriter AudioWriter;
+            public NativeQueue<AudioEvent>.ParallelWriter AudioWriter;
         }
     }
 }

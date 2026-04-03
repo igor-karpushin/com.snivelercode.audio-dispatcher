@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoAudioConfiguration
   m_EditorClassIdentifier: 
   PoolSize: 32
+  LoopPoolSize: 16
   Sounds:
   - Name: Shot
     Clip: {fileID: 8300000, guid: d6ac4ca9d2d6bce47b30e0fe0ecc6910, type: 3}
@@ -24,6 +25,14 @@ MonoBehaviour:
     RolloffMode: 0
   - Name: Explosion
     Clip: {fileID: 8300000, guid: e857c074227284040981b8031549d9c9, type: 3}
+    MixerGroup: {fileID: 24300002, guid: cca52b8da97125e4faa1f95355c72977, type: 2}
+    DefaultVolume: 1
+    SpatialBlend: 1
+    MinDistance: 1
+    MaxDistance: 500
+    RolloffMode: 0
+  - Name: Moving
+    Clip: {fileID: 8300000, guid: 58481bfaf7916504ab12abab2515f902, type: 3}
     MixerGroup: {fileID: 24300002, guid: cca52b8da97125e4faa1f95355c72977, type: 2}
     DefaultVolume: 1
     SpatialBlend: 1

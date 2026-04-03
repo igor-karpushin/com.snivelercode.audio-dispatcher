@@ -15,11 +15,18 @@ namespace SnivelerCode.AudioDispatcher.DemoScene
         public float3 Target;
         public float ProjectileTimer;
         public Random Random;
+        public InnerState State;
 
         public void NextRandomPosition(float2 bound)
         {
             Target = new float3(Random.NextFloat(-bound.x, bound.x), 0,
                 Random.NextFloat(-bound.y, bound.y));
+        }
+
+        public enum InnerState
+        {
+            Spawning,
+            Moving
         }
     }
 
