@@ -1,73 +1,98 @@
 # Audio Dispatcher for Unity DOTS
 
-**Version:** 1.0.0  
-**Unity Version:** 2022.3+ (LTS recommended)  
-**Dependencies:** `com.unity.entities`, `com.unity.burst`, `com.unity.collections`
+![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black?logo=unity)
+![DOTS](https://img.shields.io/badge/DOTS-Entities_1.0%2B-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## Overview
+**Audio Dispatcher** is a production-ready, high-performance bridge between Unity's Data-Oriented Technology Stack (DOTS/ECS) and the classic Managed `AudioSource` system.
 
-**Audio Dispatcher** is a high-performance, thread-safe bridge between Unity's Data-Oriented Technology Stack (DOTS/ECS) and the classic `AudioSource` system.
+Triggering standard Unity audio from pure ECS is notoriously difficult because managed objects cannot be accessed inside Burst-compiled jobs. This package solves that problem using a lock-free `NativeQueue` architecture, Double Buffering, and a highly optimized Zero-GC object pool.
 
-In pure ECS, triggering audio is difficult because `AudioSource` (a managed class) cannot be accessed directly from Burst-compiled jobs. This package solves that problem using a lock-free `NativeQueue` architecture and a highly optimized object pool.
+## ✨ Key Features
 
-### Key Features
-
-*   **⚡ Burst Compatible:** Trigger sound events directly from `IJobEntity` or `ISystem`.
-*   **🚀 Zero GC Allocations:** Uses a pre-allocated Object Pool to play sounds. No `Instantiate` or `Destroy` at runtime.
-*   **🎛️ Audio Mixer Support:** Full control over Output Groups (Master, SFX, Music, UI).
-*   **🔊 3D Spatial Audio:** Configurable Spatial Blend (2D/3D), Min/Max Distance, and Rolloff curves.
-*   **🛠️ ID Generation:** Auto-generates C# `const int` IDs for your audio clips to prevent string-based errors.
-
----
-
-## Installation
-
-### Method 1: Via Unity Asset Store (Recommended)
-1.  Open your project in Unity.
-2.  Go to **Window > Package Manager**.
-3.  Select **My Assets** from the dropdown menu in the top-left corner.
-4.  Search for **Audio Dispatcher**.
-5.  Click **Download**, then click **Import**.
-6.  Ensure all files are selected and click **Import** again.
-    *   *The package will be installed into `Assets/SnivelerCode/AudioDispatcher`.*
-    *   *Unity will automatically detect the `package.json` and install dependencies (Burst, Collections, etc.).*
-
-### Method 2: Manual Installation (Advanced)
-If you have the raw package files (e.g., from a repository backup):
-1.  Open Unity Package Manager.
-2.  Click **+ > Add package from disk...**
-3.  Select the `package.json` file inside the `com.snivelercode.audio-dispatcher` folder.
+* **⚡ 100% Burst Compatible:** Trigger sounds directly from `IJobEntity` or `ISystem` without performance penalties.
+* **🚀 Zero Main Thread Stalls:** Uses a Double Buffering Command Architecture. The main thread never waits for your ECS workers.
+* **🗑️ Zero GC Allocations:** Pre-allocated object pools for both One-Shot and Looping sounds.
+* **🧠 Smart Voice Stealing:** If the audio pool is full, the system calculates priorities and automatically replaces the quietest/furthest sound.
+* **🔗 Shadow Tracking (Loops):** Attach looping sounds (like engine noises) to moving entities. The sound follows the entity and stops automatically when the entity is destroyed, without modifying your core archetypes.
+* **💎 Fluent API:** Clean, readable, and chainable syntax for triggering sounds.
+* **🛠️ Stable Hash IDs:** Auto-generates C# `const int` IDs for your audio clips using stable hashes. Reordering your audio database will never break your code.
 
 ---
 
-## Quick Start
+## 📦 Installation
 
-1.  **Create Configuration:**
-    Right-click in Project view -> `Create > SnivelerCode > Audio Configuration`.
-2.  **Add Sounds:**
-    Add your `AudioClips` to the list. Assign names, volumes, and Mixer Groups.
-3.  **Generate IDs:**
-    Click the green **"Generate C# Constants"** button in the inspector. This creates `AudioID.cs`.
-4.  **Scene Setup:**
-    Create a GameObject in your sub-scene. Add the `AudioSettingsAuthoring` component and assign your Configuration asset.
-5.  **Play Sound (Code):**
+### Install via Unity Package Manager (Git URL)
+1. Open your Unity project.
+2. Go to **Window > Package Manager**.
+3. Click the **+** button in the top-left corner and select **Add package from git URL...**
+4. Paste the following URL and click **Add**:
+   ```text
+   https://github.com/sniveler-code/com.snivelercode.audio-dispatcher.git
 
+### Install via manifest.json
+Alternatively, open Packages/manifest.json and add the following line to your "dependencies" block:
+   ```text
+   "com.snivelercode.audio-dispatcher": "https://github.com/sniveler-code/com.snivelercode.audio-dispatcher.git"
+```
+## 🚀 Quick Start
+### 1. Create an Audio Database
+Right-click in your Project view and select `Create > SnivelerCode > Audio Database`. Add your AudioClips to the list, tweak volumes, and assign AudioMixer groups.
+### 2. Generate C# IDs
+Select your new Audio Database asset. In the Inspector, click the green `Generate C# Constants` button. This will generate a file with stable Hash IDs for your sounds.
+### 3. Scene Setup
+Create an empty `GameObject` in your sub-scene. Add the AudioSettingsAuthoring component to it and assign your Audio Database asset.
+### 4. Play Sounds from Burst Jobs (Fluent API)
+You can now trigger sounds from anywhere in your ECS code using the elegant Fluent API:
 ```csharp
-// Inside a Burst-compiled System
-partial struct MyGameSystem : ISystem
+using SnivelerCode.AudioDispatcher.Runtime;
+using Unity.Burst;
+using Unity.Entities;
+
+[BurstCompile]
+public partial struct MyCombatSystem : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // 1. Get the Audio Singleton
-        var audioSys = SystemAPI.GetSingletonRW<NativeAudioSystem.Singleton>();
-        
-        // 2. Queue an event
-        audioSys.ValueRW.Writer.Enqueue(new NativeAudioSystem.AudioEvent
+        // 1. Get the Audio Writer (Read-Only access allows parallel job scheduling)
+        var audioSingleton = SystemAPI.GetSingleton<NativeAudioSystem.Singleton>();
+    
+        state.Dependency = new CombatJob
         {
-            SoundId = AudioID.EXPLOSION, // Auto-generated ID
-            Position = new float3(0, 0, 0),
-            Volume = 1.0f,
-            Pitch = 1.0f
-        });
+            AudioWriter = audioSingleton.Writer
+        }.ScheduleParallel(state.Dependency);
     }
 }
+
+[BurstCompile]
+public partial struct CombatJob : IJobEntity
+{
+    public NativeQueue<AudioEvent>.ParallelWriter AudioWriter;
+    private void Execute(in LocalTransform transform)
+    {
+        // 2. Trigger a One-Shot sound using the Fluent API
+        AudioIDs.EXPLOSION.Shot(transform.Position)
+          .Volume(0.8f)
+          .Pitch(1.1f)
+          .Apply(AudioWriter);
+    }
+}
+```
+### 5. Play Looping Sounds
+To play a looping sound that follows an entity (e.g., a car engine):
+```csharp
+AudioIDs.ENGINE_LOOP.Loop(entity)
+    .Volume(0.5f)
+    .Apply(AudioWriter);
+```
+The system will automatically track the entity's position and stop the sound when the entity is destroyed.
+
+## 🏗️ Under the Hood (Architecture)
+This package was built with strict Data-Oriented Design principles:
+* **Cache-Line Alignment:** The `AudioEvent` struct uses `[StructLayout(LayoutKind.Explicit)]` to overlap Entity and `float3` Position data. This compresses the struct to exactly 32 bytes, allowing exactly two events to fit perfectly into a standard 64-byte L1 CPU cache line.
+* **Double Buffering:** ECS Jobs write to `Queue A` while the Main Thread reads from `Queue B`. In the next frame, they swap. This completely eliminates `Dependency.Complete()` stalls.
+* **Unmanaged Brain:** All pooling logic, priority calculations, and lifetime tracking are done inside a Burst-compiled `IJob`. The Main Thread acts only as a "dumb executor" that applies a flat array of commands to the Unity C++ API.
+
+## 🎮 Samples
+The package includes a complete **Tank Battle Demo** (`Samples~/DemoScene`). It demonstrates chaotic projectile collisions, moving tank engine loops, global entity destruction, and spatial audio routing. Import it via the Package Manager to see the system in action!

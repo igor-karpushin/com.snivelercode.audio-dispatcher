@@ -6,10 +6,14 @@
   "unity": "2022.3",
   "author": {
     "name": "SnivelerCode",
-    "url": "https://github.com/igor-karpushin/com.snivelercode.audio-dispatcher"
+    "url": "https://github.com/sniveler-code"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sniveler-code/com.snivelercode.audio-dispatcher.git"
   },
   "dependencies": {
-	"com.unity.entities.graphics": "1.4.18"
+    "com.unity.entities.graphics": "1.4.18"
   },
   "samples": [
     {
